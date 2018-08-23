@@ -1,0 +1,168 @@
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+
+MDNSResponder mdns;
+
+// Replace with your network credentials
+const char* ssid = "WIFI SSID";
+const char* password = "WIFI PASSWORD";
+
+ESP8266WebServer server(8888);
+
+String webPage = "";
+
+int stp = 4;
+int dir = 5;
+int EN = 14;
+
+int x;
+int x2;
+int y;
+int state;
+
+void setup(void) {
+  webPage += "<h1>Curtain Controller</h1><p>Curtain #1 <a href=\"Curtain1Open\"><button>Open</button><a href=\"Curtain1OpenHalf\"><button>Open Half</button></a>&nbsp;<a href=\"Curtain1CloseHalf\"><button>Close Half</button><a href=\"Curtain1Close\"><button>Close</button></a></p>";
+
+  pinMode(stp, OUTPUT);
+  pinMode(dir, OUTPUT);
+  pinMode(EN, OUTPUT);
+  resetEDPins(); 
+
+  delay(1000);
+  Serial.begin(9600);
+  WiFi.begin(ssid, password);
+  Serial.println("");
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println("");
+  Serial.print("Connected to ");
+  Serial.println(ssid);
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  if (mdns.begin("esp8266", WiFi.localIP())) {
+    Serial.println("MDNS responder started");
+  }
+
+  server.on("/", []() {
+    server.send(200, "text/html", webPage);
+  });
+  server.on("/Curtain1Open", []() {
+    server.send(200, "text/html", webPage);
+    Curtain1Open();
+  });
+  server.on("/Curtain1OpenHalf", []() {
+    server.send(200, "text/html", webPage);
+    Curtain1OpenHalf();
+  });
+  server.on("/Curtain1Close", []() {
+    server.send(200, "text/html", webPage);
+    Curtain1Close();
+  });
+  server.on("/Curtain1CloseHalf", []() {
+    server.send(200, "text/html", webPage);
+    Curtain1CloseHalf();
+  });
+
+  server.begin();
+  Serial.println("HTTP server started");
+
+}
+
+void loop(void) {
+  server.handleClient();
+}
+
+
+void Curtain1Open()
+{
+  ESP.wdtDisable();
+  Serial.println("Opening Curtain #1");
+  digitalWrite(dir, LOW); 
+  digitalWrite(EN, LOW);
+  Serial.println("Opening Curtain #1 - First Half");
+  for (x = 1; x < 4500; x++) 
+  {
+    digitalWrite(stp, HIGH); 
+    delayMicroseconds(500);
+    digitalWrite(stp, LOW); 
+    delayMicroseconds(500);
+  }
+  yield();
+  Serial.println("Opened");
+  Serial.println();
+  digitalWrite(EN, HIGH);
+  ESP.wdtEnable(5900);
+}
+
+void Curtain1OpenHalf()
+{
+  ESP.wdtDisable();
+  Serial.println("Opening Curtain #1");
+  digitalWrite(dir, LOW); 
+  digitalWrite(EN, LOW);
+  Serial.println("Opening Curtain #1 - First Half");
+  for (x = 1; x < 2250; x++) 
+  {
+    digitalWrite(stp, HIGH); 
+    delayMicroseconds(500);
+    digitalWrite(stp, LOW); 
+    delayMicroseconds(500);
+  }
+  yield();
+  Serial.println("Opened");
+  Serial.println();
+  digitalWrite(EN, HIGH);
+  ESP.wdtEnable(5900);
+}
+
+void Curtain1Close()
+{
+  ESP.wdtDisable();
+  Serial.println("Closing Curtain #1");
+  digitalWrite(dir, HIGH); 
+  digitalWrite(EN, LOW);
+  for (x = 1; x < 4500; x++) 
+  {
+    digitalWrite(stp, HIGH); 
+    delayMicroseconds(500);
+    digitalWrite(stp, LOW); 
+    delayMicroseconds(500);
+  }
+  Serial.println("Closed");
+  Serial.println();
+  digitalWrite(EN, HIGH);
+  ESP.wdtEnable(5900);
+}
+
+void Curtain1CloseHalf()
+{
+  ESP.wdtDisable();
+  Serial.println("Closing Curtain #1");
+  digitalWrite(dir, HIGH); 
+  digitalWrite(EN, LOW);
+  for (x = 1; x < 2250; x++) 
+  {
+    digitalWrite(stp, HIGH); 
+    delayMicroseconds(500);
+    digitalWrite(stp, LOW); 
+    delayMicroseconds(500);
+  }
+  Serial.println("Closed");
+  Serial.println();
+  digitalWrite(EN, HIGH);
+  ESP.wdtEnable(5900);
+}
+
+void resetEDPins()
+{
+  digitalWrite(stp, LOW);
+  digitalWrite(dir, LOW);
+  digitalWrite(EN, HIGH);
+}
