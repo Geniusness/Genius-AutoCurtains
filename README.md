@@ -3,7 +3,7 @@ Automatic curtains driven by an "Arduino" ESP8266
 
 Basic Automatic Curtains
 
-Pics: https://imgur.com/gallery/GTEHvXl
+![alt text](https://raw.githubusercontent.com/Geniusness/Genius-AutoCurtains/master/imgs/curtains-opening.gif)
 
 This project was put together using unused parts from a cnc router kit I built a few years ago.  
 
