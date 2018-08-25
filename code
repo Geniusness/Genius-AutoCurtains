@@ -21,25 +21,29 @@ int x;
 int x2;
 int y;
 int state;
+int ocstatus;
+int totalsteps;
 
 void setup(void) {
+  ocstatus = 0;
+  totalsteps = 4500;
   webPage += "<h1>Curtain Controller</h1><p>Curtain #1 <a href=\"Curtain1Open\"><button>Open</button><a href=\"Curtain1OpenHalf\"><button>Open Half</button></a>&nbsp;<a href=\"Curtain1CloseHalf\"><button>Close Half</button><a href=\"Curtain1Close\"><button>Close</button></a></p>";
-
+  
   pinMode(stp, OUTPUT);
   pinMode(dir, OUTPUT);
   pinMode(EN, OUTPUT);
-  resetEDPins(); 
+  resetEDPins();
 
   delay(1000);
   Serial.begin(9600);
   WiFi.begin(ssid, password);
   Serial.println("");
 
+  // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
-  
   Serial.println("");
   Serial.print("Connected to ");
   Serial.println(ssid);
@@ -79,85 +83,170 @@ void loop(void) {
   server.handleClient();
 }
 
-
 void Curtain1Open()
 {
-  ESP.wdtDisable();
-  Serial.println("Opening Curtain #1");
-  digitalWrite(dir, LOW); 
-  digitalWrite(EN, LOW);
-  Serial.println("Opening Curtain #1 - First Half");
-  for (x = 1; x < 4500; x++) 
+  if (ocstatus == 0)
   {
-    digitalWrite(stp, HIGH); 
-    delayMicroseconds(500);
-    digitalWrite(stp, LOW); 
-    delayMicroseconds(500);
+    ESP.wdtDisable();
+    Serial.println("Opening Curtains #1");
+    digitalWrite(dir, LOW);
+    digitalWrite(EN, LOW);
+    for (x = 1; x < totalsteps; x++) 
+    {
+      digitalWrite(stp, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stp, LOW);
+      delayMicroseconds(500);
+    }
+    yield();
+    Serial.println("Opened Full");
+    ocstatus = 1;
+    Serial.println();
+    digitalWrite(EN, HIGH);
+    ESP.wdtEnable(5900);
+  } else if (ocstatus == 2)
+  {
+    ESP.wdtDisable();
+    Serial.println("Opening Curtains #1 Second Half");
+    digitalWrite(dir, LOW);
+    digitalWrite(EN, LOW);
+    for (x = 1; x < (totalsteps/2); x++) 
+    {
+      digitalWrite(stp, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stp, LOW);
+      delayMicroseconds(500);
+    }
+    yield();
+    Serial.println("Opened Full");
+    ocstatus = 1;
+    Serial.println();
+    digitalWrite(EN, HIGH);
+    ESP.wdtEnable(5900);
   }
-  yield();
-  Serial.println("Opened");
-  Serial.println();
-  digitalWrite(EN, HIGH);
-  ESP.wdtEnable(5900);
 }
 
 void Curtain1OpenHalf()
 {
-  ESP.wdtDisable();
-  Serial.println("Opening Curtain #1");
-  digitalWrite(dir, LOW); 
-  digitalWrite(EN, LOW);
-  Serial.println("Opening Curtain #1 - First Half");
-  for (x = 1; x < 2250; x++) 
+  if (ocstatus == 0)
   {
-    digitalWrite(stp, HIGH); 
-    delayMicroseconds(500);
-    digitalWrite(stp, LOW); 
-    delayMicroseconds(500);
+    ESP.wdtDisable();
+    Serial.println("Opening Curtains #1 First Half");
+    digitalWrite(dir, LOW);
+    digitalWrite(EN, LOW);
+    for (x = 1; x < (totalsteps / 2); x++)
+    {
+      digitalWrite(stp, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stp, LOW);
+      delayMicroseconds(500);
+    }
+    yield();
+    Serial.println("Opened Half");
+    ocstatus = 2;
+    Serial.println();
+    digitalWrite(EN, HIGH);
+    ESP.wdtEnable(5900);
+  } else if (ocstatus == 2)
+  {
+    ESP.wdtDisable();
+    Serial.println("Opening Curtains #1 Second Half");
+    digitalWrite(dir, LOW);
+    digitalWrite(EN, LOW);
+    for (x = 1; x < (totalsteps / 2); x++)
+    {
+      digitalWrite(stp, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stp, LOW);
+      delayMicroseconds(500);
+    }
+    yield();
+    Serial.println("Opened Full");
+    ocstatus = 1;
+    Serial.println();
+    digitalWrite(EN, HIGH);
+    ESP.wdtEnable(5900);
   }
-  yield();
-  Serial.println("Opened");
-  Serial.println();
-  digitalWrite(EN, HIGH);
-  ESP.wdtEnable(5900);
 }
 
 void Curtain1Close()
 {
-  ESP.wdtDisable();
-  Serial.println("Closing Curtain #1");
-  digitalWrite(dir, HIGH); 
-  digitalWrite(EN, LOW);
-  for (x = 1; x < 4500; x++) 
+  if (ocstatus == 1)
   {
-    digitalWrite(stp, HIGH); 
-    delayMicroseconds(500);
-    digitalWrite(stp, LOW); 
-    delayMicroseconds(500);
+    ESP.wdtDisable();
+    Serial.println("Closing Curtain #1");
+    digitalWrite(dir, HIGH);
+    digitalWrite(EN, LOW);
+    for (x = 1; x < totalsteps; x++) 
+    {
+      digitalWrite(stp, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stp, LOW);
+      delayMicroseconds(500);
+    }
+    Serial.println("Closed");
+    ocstatus = 0;
+    Serial.println();
+    digitalWrite(EN, HIGH);
+    ESP.wdtEnable(5900);
+  } else if (ocstatus == 2)
+  {
+    Serial.println("Closing Curtain #1 Second Half");
+    digitalWrite(dir, HIGH); 
+    digitalWrite(EN, LOW);
+    for (x = 1; x < (totalsteps / 2); x++) 
+    {
+      digitalWrite(stp, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stp, LOW);
+      delayMicroseconds(500);
+    }
+    Serial.println("Closed");
+    ocstatus = 0;
+    Serial.println();
+    digitalWrite(EN, HIGH);
+    ESP.wdtEnable(5900);
   }
-  Serial.println("Closed");
-  Serial.println();
-  digitalWrite(EN, HIGH);
-  ESP.wdtEnable(5900);
 }
 
-void Curtain1CloseHalf()
-{
-  ESP.wdtDisable();
-  Serial.println("Closing Curtain #1");
-  digitalWrite(dir, HIGH); 
-  digitalWrite(EN, LOW);
-  for (x = 1; x < 2250; x++) 
+void Curtain1CloseHalf() {
+  if (ocstatus == 1)
   {
-    digitalWrite(stp, HIGH); 
-    delayMicroseconds(500);
-    digitalWrite(stp, LOW); 
-    delayMicroseconds(500);
+    ESP.wdtDisable();
+    Serial.println("Closing Curtain #1 First Half");
+    digitalWrite(dir, HIGH);
+    digitalWrite(EN, LOW);
+    for (x = 1; x < (totalsteps / 2); x++) 
+    {
+      digitalWrite(stp, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stp, LOW);
+      delayMicroseconds(500);
+    }
+    Serial.println("Closed Half");
+    ocstatus = 2;
+    Serial.println();
+    digitalWrite(EN, HIGH);
+    ESP.wdtEnable(5900);
+  } else if (ocstatus == 2)
+  {
+    ESP.wdtDisable();
+    Serial.println("Closing Curtain #1 Second Half");
+    digitalWrite(dir, HIGH);
+    digitalWrite(EN, LOW);
+    for (x = 1; x < (totalsteps / 2); x++) 
+    {
+      digitalWrite(stp, HIGH);
+      delayMicroseconds(500);
+      digitalWrite(stp, LOW);
+      delayMicroseconds(500);
+    }
+    Serial.println("Closed");
+    ocstatus = 0;
+    Serial.println();
+    digitalWrite(EN, HIGH);
+    ESP.wdtEnable(5900);
   }
-  Serial.println("Closed");
-  Serial.println();
-  digitalWrite(EN, HIGH);
-  ESP.wdtEnable(5900);
 }
 
 void resetEDPins()
